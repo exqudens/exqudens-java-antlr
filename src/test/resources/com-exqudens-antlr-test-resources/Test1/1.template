@@ -1,0 +1,42 @@
+<rule>
+  <lexer name='RUSSIAN_LOWER_LETTER'>[\u0451\u0430-\u044F]</lexer>
+  <lexer name='RUSSIAN_UPPER_LETTER'>[\u0401\u0410-\u042F]</lexer>
+  <lexer name='ENGLISH_LOWER_LETTER'>[a-z]</lexer>
+  <lexer name='ENGLISH_UPPER_LETTER'>[A-Z]</lexer>
+  <lexer name='NUMBER'>[0-9]</lexer>
+  <lexer name='DASH'>[-]</lexer>
+  <lexer name='UNDER_LINE'>[_]</lexer>
+  <lexer name='SPACE'>[ ]</lexer>
+  <lexer name='DOT'>[.]</lexer>
+  <lexer name='COMMA'>[,]</lexer>
+  <lexer name='COLON'>[:]</lexer>
+  <lexer name='SEMICOLON'>[;]</lexer>
+  <lexer name='NEW_LINE'>[\n]</lexer>
+  <lexer name='TAB'>[\t]</lexer>
+  <lexer name='RETURN'>[\r]</lexer>
+
+  <parser name='russian_letter'>( RUSSIAN_LOWER_LETTER | RUSSIAN_UPPER_LETTER )</parser>
+  <parser name='russian_letters'>russian_letter+</parser>
+  <parser name='english_letter'>( ENGLISH_LOWER_LETTER | ENGLISH_UPPER_LETTER )</parser>
+  <parser name='english_letters'>english_letter+</parser>
+  <parser name='lower_letter'>( RUSSIAN_LOWER_LETTER | ENGLISH_LOWER_LETTER )</parser>
+  <parser name='lower_letters'>lower_letter+</parser>
+  <parser name='upper_letter'>( RUSSIAN_UPPER_LETTER | ENGLISH_UPPER_LETTER )</parser>
+  <parser name='upper_letters'>upper_letter+</parser>
+  <parser name='letter'>( lower_letter | upper_letter )</parser>
+  <parser name='letters'>letter+</parser>
+  <parser name='number'>NUMBER</parser>
+  <parser name='numbers'>number+</parser>
+  <parser name='space'>SPACE</parser>
+  <parser name='spaces'>space+</parser>
+  <parser name='new_line'>NEW_LINE</parser>
+  <parser name='new_lines'>new_line+</parser>
+  <parser name='tab'>TAB</parser>
+  <parser name='tabs'>tab+</parser>
+  <parser name='eof'>EOF</parser>
+  <parser name='word'>letter+</parser>
+  <parser name='identifier'>( letter | NUMBER | DASH | UNDER_LINE )+</parser>
+</rule>OrderNumber\< <identifier name='order_number' delimiter='-'/>
+<or><area>  Items:</area><area>  items:</area></or>
+<repeat><repeat><spaces/><identifier name='item_description'/><spaces/>$<numbers name='item_price'/><optional>zzz</optional></repeat>
+</repeat><eof/>

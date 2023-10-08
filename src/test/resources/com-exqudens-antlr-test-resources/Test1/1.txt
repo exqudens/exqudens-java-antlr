@@ -1,0 +1,6 @@
+OrderNumber< 12345ABC
+  items:
+    description_1   $2zzz    description___4 $200
+    description__2  $20   description__5  $20
+    description___3 $200  description_6   $2
+
