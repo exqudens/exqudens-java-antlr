@@ -7,7 +7,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,6 +67,7 @@ public class UnitTests {
             System.out.println("testDir: '" + testDir + "'");
 
             String[] args = new String[] {
+                "--" + Application.LONG_OPT_HELP,
                 "--" + Application.LONG_OPT_INPUT_STRING, "Order: 123",
                 "--" + Application.LONG_OPT_TEMPLATE_STRING, "Order: <identifier name='order_number'/>",
                 "--" + Application.LONG_OPT_OUTPUT_INDENT_FACTOR, "4"

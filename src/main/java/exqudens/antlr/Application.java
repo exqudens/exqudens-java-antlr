@@ -3,6 +3,7 @@ package exqudens.antlr;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.json.JSONObject;
@@ -16,9 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 
 public interface Application {
 
+    String LONG_OPT_HELP = "help";
     String LONG_OPT_CHARSET = "charset";
     String LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL = "template-new-line-universal";
     String LONG_OPT_INPUT_STRING = "input-string";
@@ -34,6 +37,10 @@ public interface Application {
 
     default void run(String... args) {
         try {
+            Option helpOption = Option
+                .builder()
+                .longOpt(LONG_OPT_HELP)
+                .build();
             Option charsetOption = Option
                 .builder()
                 .longOpt(LONG_OPT_CHARSET)
@@ -85,6 +92,7 @@ public interface Application {
 
             Options options = new Options();
 
+            options.addOption(helpOption);
             options.addOption(charsetOption);
             options.addOption(templateNewLineUniversalOption);
             options.addOption(inputStringOption);
@@ -96,6 +104,15 @@ public interface Application {
 
             CommandLineParser commandLineParser = new DefaultParser();
             CommandLine commandLine = commandLineParser.parse(options, args);
+
+            if (commandLine.hasOption(helpOption)) {
+                HelpFormatter formatter = new HelpFormatter();
+                Properties properties = new Properties();
+                properties.load(Application.class.getResourceAsStream("/main.properties"));
+                String cmdLineSyntax = properties.get("project.artifactId") + "-" + properties.get("project.version");
+                formatter.printHelp(cmdLineSyntax, options);
+                return;
+            }
 
             String userCharset = null;
             String userTemplateNewLineUniversal = null;
