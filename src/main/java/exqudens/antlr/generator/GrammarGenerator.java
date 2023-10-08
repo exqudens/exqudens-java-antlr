@@ -68,7 +68,11 @@ public interface GrammarGenerator extends NodeProcessor {
 
         List<LexerRule> lexerRules = new ArrayList<>(lexerRuleMap.values());
         List<ParserRule> parserRules = new ArrayList<>(parserRuleMap.values());
-        node.getFirstChild().removeChild(document.getElementsByTagName(Constants.CONTROL_NODE_NAME_RULE).item(0));
+
+        if (document.getElementsByTagName(Constants.CONTROL_NODE_NAME_RULE).getLength() > 0) {
+            node.getFirstChild().removeChild(document.getElementsByTagName(Constants.CONTROL_NODE_NAME_RULE).item(0));
+        }
+
         return toGrammarEntry(document, newStartTag, newEndTag, grammarName, lexerRules, parserRules);
     }
 

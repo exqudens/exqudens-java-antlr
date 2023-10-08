@@ -1,0 +1,10 @@
+OrderNumber< 12345.ABC
+  Items:
+    description_1   $1zzz    description___4 $400
+    description__2  $20   description__5  $50
+    description___3 $300  description_6   $6
+OrderNumber< 09876XYZ
+  items:
+    description_7   $7zzz    description___10 $1000
+    description__8  $80   description__11  $110
+    description___9 $900  description_12   $12

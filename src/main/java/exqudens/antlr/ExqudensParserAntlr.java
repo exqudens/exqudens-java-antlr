@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,6 +36,7 @@ public interface ExqudensParserAntlr {
         try {
             Entry<String, Map<String, Map<String, String>>> grammarEntry = GrammarGenerator.newInstance().toGrammarEntry(template, simpleClassName);
             String grammar = grammarEntry.getKey();
+
             Map<String, Map<String, String>> ruleConfigMap = grammarEntry.getValue();
             Map<String, String> javaFiles = JavaGenerator.newInstance().generateJavaFiles(simpleClassName + "." + Constants.GRAMMAR_EXTENSION, grammar, String.join(".", pack));
             Map<String, byte[]> classFiles = ClassGenerator.newInstance().generateClassFiles(javaFiles);
