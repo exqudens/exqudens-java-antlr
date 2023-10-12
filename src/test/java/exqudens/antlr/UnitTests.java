@@ -3,16 +3,74 @@ package exqudens.antlr;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 public class UnitTests {
+
+    @Test
+    public void test0() throws Throwable {
+        Assertions.assertNotNull(System.getProperty("project.basedir"));
+        Assertions.assertFalse(System.getProperty("project.basedir").isEmpty());
+
+        Assertions.assertNotNull(System.getProperty("project.artifactId"));
+        Assertions.assertFalse(System.getProperty("project.artifactId").isEmpty());
+
+        Assertions.assertNotNull(System.getProperty("project.version"));
+        Assertions.assertFalse(System.getProperty("project.version").isEmpty());
+
+        Assertions.assertNotNull(System.getProperty("project.build.directory"));
+        Assertions.assertFalse(System.getProperty("project.build.directory").isEmpty());
+
+        String jarFileName = String.join("-",
+            System.getProperty("project.artifactId"),
+            System.getProperty("project.version"),
+            "executable.jar"
+        );
+        String javaCommand = Paths.get(System.getProperty("java.home"), "bin", "java").toFile().getAbsolutePath();
+        String buildDir = Paths.get(System.getProperty("project.build.directory")).toFile().getAbsolutePath();
+        String jarFile = Paths.get(buildDir, jarFileName).toFile().getAbsolutePath();
+
+        System.out.println("jarFile: '" + jarFile + "'");
+
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        Process process = new ProcessBuilder()
+            //.command("cmd.exe", "/c", "dir", buildDir)
+            //.command("cmd.exe", "/c", javaCommand, "--version")
+            .command("cmd.exe", "/c", javaCommand, "-jar", jarFile)
+            .directory(Paths.get(System.getProperty("user.dir")).toFile())
+            .start();
+        List<String> result = new ArrayList<>();
+
+        //OutputStream outputStream = process.getOutputStream();
+        //InputStream inputStream = process.getInputStream();
+        //InputStream errorStream = process.getErrorStream();
+
+        try (
+            InputStreamReader reader = new InputStreamReader(process.getInputStream());
+            BufferedReader bufferedReader = new BufferedReader(reader)
+        ) {
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                result.add(line);
+            }
+        }
+
+        for (String line : result) {
+            System.out.println(line);
+        }
+    }
 
     @Test
     public void test1() {

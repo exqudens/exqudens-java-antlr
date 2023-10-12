@@ -105,7 +105,7 @@ public interface Application {
             CommandLineParser commandLineParser = new DefaultParser();
             CommandLine commandLine = commandLineParser.parse(options, args);
 
-            if (commandLine.hasOption(helpOption)) {
+            if (commandLine.getOptions().length == 0 || commandLine.hasOption(helpOption)) {
                 HelpFormatter formatter = new HelpFormatter();
                 Properties properties = new Properties();
                 properties.load(Application.class.getResourceAsStream("/main.properties"));
