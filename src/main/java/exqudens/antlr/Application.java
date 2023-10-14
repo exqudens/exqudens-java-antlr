@@ -1,5 +1,6 @@
 package exqudens.antlr;
 
+import exqudens.antlr.model.ParsingResult;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -11,6 +12,7 @@ import org.json.JSONObject;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +31,7 @@ public interface Application {
     String LONG_OPT_TEMPLATE_STRING = "template-string";
     String LONG_OPT_TEMPLATE_FILE = "template-file";
     String LONG_OPT_OUTPUT_INDENT_FACTOR = "output-indent-factor";
-    String LONG_OPT_OUTPUT_FILE = "output-file";
+    String LONG_OPT_OUTPUT_DIR = "output-dir";
 
     static Application newInstance() {
         return new Application() {};
@@ -83,9 +85,9 @@ public interface Application {
                 .type(String.class)
                 .hasArg()
                 .build();
-            Option outputFileOption = Option
+            Option outputDirOption = Option
                 .builder()
-                .longOpt(LONG_OPT_OUTPUT_FILE)
+                .longOpt(LONG_OPT_OUTPUT_DIR)
                 .type(String.class)
                 .hasArg()
                 .build();
@@ -100,7 +102,7 @@ public interface Application {
             options.addOption(templateStringOption);
             options.addOption(templateFileOption);
             options.addOption(outputIndentFactorOption);
-            options.addOption(outputFileOption);
+            options.addOption(outputDirOption);
 
             CommandLineParser commandLineParser = new DefaultParser();
             CommandLine commandLine = commandLineParser.parse(options, args);
@@ -121,7 +123,7 @@ public interface Application {
             String userTemplateString = null;
             String userTemplateFile = null;
             String userOutputIndentFactor = null;
-            String userOutputFile = null;
+            String userOutputDir = null;
 
             if (commandLine.hasOption(charsetOption)) {
                 userCharset = commandLine.getOptionValue(charsetOption);
@@ -144,8 +146,8 @@ public interface Application {
             if (commandLine.hasOption(outputIndentFactorOption)) {
                 userOutputIndentFactor = commandLine.getOptionValue(outputIndentFactorOption);
             }
-            if (commandLine.hasOption(outputFileOption)) {
-                userOutputFile = commandLine.getOptionValue(outputFileOption);
+            if (commandLine.hasOption(outputDirOption)) {
+                userOutputDir = commandLine.getOptionValue(outputDirOption);
             }
 
             String templateNL = "<or><area><carriage_return/><new_line/></area><area><carriage_return/></area><area><new_line/></area></or>";
@@ -192,19 +194,17 @@ public interface Application {
 
             String currentMethodName = new Object() {}.getClass().getEnclosingMethod().getName();
 
-            Map.Entry<Map<List<String>, String>, Map<String, Map<String, String>>> parsingResult = ExqudensParserAntlr
-                .newInstance()
-                .parse(
-                    text,
-                    template,
-                    currentMethodName.substring(0, 1).toUpperCase() + currentMethodName.substring(1),
-                    getClass().getPackage().getName().split("\\.")
-                );
-            Map<String, Map<String, String>> configMap = parsingResult.getValue();
-            Map<List<String>, String> resultMap = parsingResult.getKey();
+            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(
+                text,
+                template,
+                currentMethodName.substring(0, 1).toUpperCase() + currentMethodName.substring(1),
+                getClass().getPackage().getName().split("\\.")
+            );
+
+            Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
             List<Map<String, Object>> entries = new ArrayList<>();
 
-            for (Map.Entry<List<String>, String> resultMapEntry : resultMap.entrySet()) {
+            for (Map.Entry<List<String>, String> resultMapEntry : parsingResult.getEntries()) {
                 Map<String, Object> entry = new HashMap<>();
                 entry.put("key", resultMapEntry.getKey());
                 entry.put("value", resultMapEntry.getValue());
@@ -213,16 +213,29 @@ public interface Application {
 
             Map<String, Object> map = new HashMap<>();
 
-            map.put("configuration", configMap);
+            map.put("configuration", configuration);
             map.put("entries", entries);
 
-            String output = new JSONObject(map).toString(outputIndentFactor);
+            String json = new JSONObject(map).toString(outputIndentFactor);
 
-            if (userOutputFile == null) {
-                System.out.println(output);
+            if (userOutputDir == null) {
+                System.out.println(json);
             } else {
-                byte[] bytes = output.getBytes(charset);
-                Files.write(Paths.get(userOutputFile), bytes);
+                Path outputDir = Paths.get(userOutputDir);
+                if (!Files.exists(outputDir)) {
+                    Files.createDirectories(outputDir);
+
+                    String grammar = parsingResult.getGrammar();
+                    Path grammarFile = outputDir.resolve(parsingResult.getGrammarFileName());
+                    byte[] grammarBytes = grammar.getBytes(charset);
+                    Files.write(grammarFile, grammarBytes);
+
+                    Path jsonFile = outputDir.resolve("parsing-result.json");
+                    byte[] jsonBytes = json.getBytes(charset);
+                    Files.write(jsonFile, jsonBytes);
+
+                    System.out.println("outputDir: '" + outputDir.toFile().getAbsolutePath() + "'");
+                }
             }
         } catch (RuntimeException e) {
             throw e;

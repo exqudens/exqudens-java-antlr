@@ -9,7 +9,7 @@ public enum Quantifier {
     public final String value;
 
     private Quantifier(char c) {
-        value = new Character(c).toString();
+        value = Character.valueOf(c).toString();
     }
 
 }

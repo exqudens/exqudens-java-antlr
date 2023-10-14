@@ -13,12 +13,22 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public interface ParseTreeProcessor extends TreeProcessor {
+
+    static ParseTreeProcessor newInstance() {
+        return new ParseTreeProcessor() {};
+    }
+
+    default List<Entry<List<String>, String>> toList(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+        Map<List<String>, String> map = toMap(parseTree, ruleNames, neededRuleNames);
+        return new ArrayList<>(map.entrySet());
+    }
 
     default Map<List<String>, String> toMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
 
