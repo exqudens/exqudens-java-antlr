@@ -155,7 +155,6 @@ public interface Application {
             String text = null;
             String template = null;
             int outputIndentFactor = 0;
-            String output = null;
 
             if (userCharset != null) {
                 charset = Charset.forName(userCharset);
@@ -217,11 +216,11 @@ public interface Application {
             map.put("configuration", configMap);
             map.put("entries", entries);
 
+            String output = new JSONObject(map).toString(outputIndentFactor);
+
             if (userOutputFile == null) {
-                output = new JSONObject(map).toString(outputIndentFactor);
                 System.out.println(output);
             } else {
-                output = new JSONObject(map).toString(outputIndentFactor);
                 byte[] bytes = output.getBytes(charset);
                 Files.write(Paths.get(userOutputFile), bytes);
             }
