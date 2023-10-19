@@ -1,10 +1,10 @@
 package exqudens.antlr.generator;
 
+import exqudens.antlr.processor.NodeProcessor;
 import exqudens.antlr.util.Constants;
 import exqudens.antlr.rule.LexerRule;
 import exqudens.antlr.rule.ParserRule;
 import exqudens.antlr.model.Rule;
-import exqudens.antlr.processor.NodeProcessor;
 import exqudens.antlr.rule.Rules;
 import exqudens.antlr.util.Util;
 import org.w3c.dom.Document;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public interface GrammarGenerator extends NodeProcessor {
+public interface GrammarGenerator {
 
     static GrammarGenerator newInstance() {
         return new GrammarGenerator() {};
@@ -39,7 +39,7 @@ public interface GrammarGenerator extends NodeProcessor {
 
     default Entry<String, Map<String, Map<String, String>>> toGrammarEntry(String templateContent, String newStartTag, String newEndTag, String grammarName) {
         String xmlContent = "<" + Constants.CONTROL_NODE_NAME_PROCESS + ">" + convert(templateContent, newStartTag, newEndTag) + "</" + Constants.CONTROL_NODE_NAME_PROCESS + ">";
-        Node node = createNode(xmlContent);
+        Node node = NodeProcessor.newInstance().createNode(xmlContent);
         Document document = (Document) node;
         NodeList lexerNodes = document.getElementsByTagName(Constants.CONTROL_NODE_NAME_LEXER);
         NodeList parserNodes = document.getElementsByTagName(Constants.CONTROL_NODE_NAME_PARSER);
@@ -78,8 +78,13 @@ public interface GrammarGenerator extends NodeProcessor {
 
     default Entry<String, Map<String, Map<String, String>>> toGrammarEntry(Node document, String newStartTag, String newEndTag, String grammarName, List<LexerRule> lexerRules, List<ParserRule> parserRules) {
         try {
-
-            removeEmptyTextNodes(document, Constants.CONTROL_NODE_NAME_PROCESS, Constants.CONTROL_NODE_NAME_REPEAT, Constants.CONTROL_NODE_NAME_OPTIONAL, Constants.CONTROL_NODE_NAME_AREA);
+            NodeProcessor.newInstance().removeEmptyTextNodes(
+                document,
+                Constants.CONTROL_NODE_NAME_PROCESS,
+                Constants.CONTROL_NODE_NAME_REPEAT,
+                Constants.CONTROL_NODE_NAME_OPTIONAL,
+                Constants.CONTROL_NODE_NAME_AREA
+            );
 
             Entry<Rule, Map<String, Map<String, String>>> entry = toRuleEntry(document.getChildNodes().item(0), newStartTag, newEndTag, parserRules.stream().map(ParserRule::getName).collect(Collectors.toSet()));
             Rule rule = entry.getKey();
@@ -132,17 +137,17 @@ public interface GrammarGenerator extends NodeProcessor {
     }
 
     default Entry<Rule, Map<String, Map<String, String>>> toRuleEntry(Node node, String newStartTag, String newEndTag, Set<String> parserRuleNames) {
-
         Map<String, Rule> textRuleMap = new HashMap<>();
         Map<String, AtomicInteger> indexMap = new HashMap<>();
         Map<List<Integer>, Rule> ruleMap = new LinkedHashMap<>();
         Map<String, Map<String, String>> attributeMap = new LinkedHashMap<>();
+        NodeProcessor nodeProcessor = NodeProcessor.newInstance();
 
-        for (Node descendant : getDescendants(node)) {
+        for (Node descendant : nodeProcessor.getDescendants(node)) {
 
             String nodeName = descendant.getNodeName();
             short nodeType = descendant.getNodeType();
-            List<Integer> key = getIntegerPath(descendant);
+            List<Integer> key = nodeProcessor.getIntegerPath(descendant);
             indexMap.putIfAbsent(nodeName, new AtomicInteger(0));
 
             String name = nodeName;

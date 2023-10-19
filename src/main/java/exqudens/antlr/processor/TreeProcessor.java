@@ -5,17 +5,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import exqudens.antlr.model.Tree;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 public interface TreeProcessor {
 
-    default Tree toTree(Tree parent, Integer index, ParseTree parseTree) {
-        Tree tree = new Tree(index, parseTree, parent, new ArrayList<>());
-        int n = parseTree.getChildCount();
-        for (int i = 0 ; i < n ; i++) {
-            tree.getChildren().add(toTree(tree, i, parseTree.getChild(i)));
-        }
-        return tree;
+    static TreeProcessor newInstance() {
+        return new TreeProcessor() {};
     }
 
     default List<Tree> getTreePath(Tree tree) {

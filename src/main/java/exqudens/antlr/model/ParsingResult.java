@@ -9,18 +9,21 @@ public class ParsingResult {
     private final String grammarFileName;
     private final String grammar;
     private final Map<String, Map<String, String>> configuration;
-    private final List<Entry<List<String>, String>> entries;
+    private final List<Entry<List<String>, String>> list;
+    private final Map<String, Object> map;
 
     public ParsingResult(
         String grammarFileName,
         String grammar,
         Map<String, Map<String, String>> configuration,
-        List<Entry<List<String>, String>> entries
+        List<Entry<List<String>, String>> list,
+        Map<String, Object> map
     ) {
         this.grammarFileName = grammarFileName;
         this.grammar = grammar;
         this.configuration = configuration;
-        this.entries = entries;
+        this.list = list;
+        this.map = map;
     }
 
     public String getGrammarFileName() {
@@ -35,8 +38,11 @@ public class ParsingResult {
         return configuration;
     }
 
-    public List<Entry<List<String>, String>> getEntries() {
-        return entries;
+    public List<Entry<List<String>, String>> getList() {
+        return list;
     }
 
+    public Map<String, Object> getMap() {
+        return map;
+    }
 }

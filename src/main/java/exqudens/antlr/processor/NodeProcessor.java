@@ -19,6 +19,10 @@ public interface NodeProcessor {
     static final String DOCUMENT_NODE_NAME = "#document";
     static final String TEXT_NODE_NAME = "#text";
 
+    static NodeProcessor newInstance() {
+        return new NodeProcessor() {};
+    }
+
     default Node createNode(String content) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -202,19 +203,19 @@ public interface Application {
             );
 
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
-            List<Map<String, Object>> entries = new ArrayList<>();
+            List<Map<String, Object>> list = new ArrayList<>();
 
-            for (Map.Entry<List<String>, String> resultMapEntry : parsingResult.getEntries()) {
-                Map<String, Object> entry = new HashMap<>();
-                entry.put("key", resultMapEntry.getKey());
-                entry.put("value", resultMapEntry.getValue());
-                entries.add(entry);
+            for (Entry<List<String>, String> entry : parsingResult.getList()) {
+                Map<String, Object> listEntry = new HashMap<>();
+                listEntry.put("key", entry.getKey());
+                listEntry.put("value", entry.getValue());
+                list.add(listEntry);
             }
 
             Map<String, Object> map = new HashMap<>();
 
             map.put("configuration", configuration);
-            map.put("entries", entries);
+            map.put("list", list);
 
             String json = new JSONObject(map).toString(outputIndentFactor);
 

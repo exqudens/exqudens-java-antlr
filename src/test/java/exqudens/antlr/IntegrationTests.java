@@ -124,7 +124,6 @@ public class IntegrationTests {
     @Test
     public void test2() {
         try {
-
             String text = String.join(System.lineSeparator(),
                 "OrderNumber< 12345.ABC",
                 "  Items:",
@@ -144,14 +143,14 @@ public class IntegrationTests {
 
                 "<rule>",
                 "  <parser name='identifier'>( letter | NUMBER | DASH | UNDER_LINE | DOT )+</parser>",
-                "</rule><repeat>OrderNumber\\< <identifier name='order_number' delimiter='-'/>",
+                "</rule><repeat produce='orders'>OrderNumber\\< <identifier name='order_number' delimiter='-'/>",
                 "<or><area>  Items:</area><area>  items:</area></or>",
-                "<repeat><repeat><spaces/><identifier name='item_description'/><spaces/>$<numbers name='item_price'/><optional>zzz</optional></repeat>",
+                "<repeat produce='items'><repeat><spaces/><identifier name='item_description'/><spaces/>$<numbers name='item_price'/><optional>zzz</optional></repeat>",
                 "</repeat></repeat><eof/>"
             );
 
             ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
-            List<Entry<List<String>, String>> entries = parsingResult.getEntries();
+            List<Entry<List<String>, String>> list = parsingResult.getList();
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
 
             System.out.println("-------------------------------------------------------------------------------------");
@@ -159,7 +158,47 @@ public class IntegrationTests {
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(template);
             System.out.println("-------------------------------------------------------------------------------------");
-            entries.forEach(System.out::println);
+            list.forEach(System.out::println);
+            System.out.println("-------------------------------------------------------------------------------------");
+            configuration.entrySet().forEach(System.out::println);
+            System.out.println("-------------------------------------------------------------------------------------");
+
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw new RuntimeException(t);
+        }
+    }
+
+    @Test
+    public void test3() {
+        try {
+            String text = String.join(System.lineSeparator(),
+                "OrderNumber: 12345.ABC",
+                ""
+            );
+
+            String template = String.join(
+                "<or><area><carriage_return/><new_line/></area><area><carriage_return/></area><area><new_line/></area></or>",
+
+                "<rule>",
+                "  <parser name='identifier'>( letter | NUMBER | DASH | UNDER_LINE | DOT )+</parser>",
+                "</rule>OrderNumber: <identifier name='order_number' delimiter='-'/>",
+                "<eof/>"
+            );
+
+            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
+            List<Entry<List<String>, String>> list = parsingResult.getList();
+            Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
+
+            System.out.println("-------------------------------------------------------------------------------------");
+            System.out.println(text);
+            System.out.println("-------------------------------------------------------------------------------------");
+            System.out.println(template);
+            System.out.println("-------------------------------------------------------------------------------------");
+            list.forEach(System.out::println);
             System.out.println("-------------------------------------------------------------------------------------");
             configuration.entrySet().forEach(System.out::println);
             System.out.println("-------------------------------------------------------------------------------------");
