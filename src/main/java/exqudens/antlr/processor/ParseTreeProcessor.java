@@ -35,11 +35,11 @@ public interface ParseTreeProcessor {
     }
 
     default Map<List<String>, String> toOrderedMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+        Tree rootTree = toTree(null, 0, parseTree);
+        TreeProcessor treeProcessor = TreeProcessor.newInstance();
         Map<String, Map<List<Integer>, Long>> repeatIdMap = new HashMap<>();
         Map<String, AtomicLong> incrementMap = new HashMap<>();
-        Tree rootTree = toTree(null, 0, parseTree);
         Map<List<String>, String> map = new LinkedHashMap<>();
-        TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
         for (Tree tree : treeProcessor.getDescendants(rootTree)) {
             if (!(tree.getParseTree() instanceof TerminalNode)) {
