@@ -150,17 +150,17 @@ public class IntegrationTests {
             );
 
             ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
-            List<Entry<List<String>, String>> list = parsingResult.getList();
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
+            List<Entry<List<String>, String>> list = parsingResult.getList();
 
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(text);
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(template);
             System.out.println("-------------------------------------------------------------------------------------");
-            list.forEach(System.out::println);
-            System.out.println("-------------------------------------------------------------------------------------");
             configuration.entrySet().forEach(System.out::println);
+            System.out.println("-------------------------------------------------------------------------------------");
+            list.forEach(System.out::println);
             System.out.println("-------------------------------------------------------------------------------------");
 
         } catch (RuntimeException e) {
@@ -190,17 +190,17 @@ public class IntegrationTests {
             );
 
             ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
-            List<Entry<List<String>, String>> list = parsingResult.getList();
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
+            List<Entry<List<String>, String>> list = parsingResult.getList();
 
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(text);
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(template);
             System.out.println("-------------------------------------------------------------------------------------");
-            list.forEach(System.out::println);
-            System.out.println("-------------------------------------------------------------------------------------");
             configuration.entrySet().forEach(System.out::println);
+            System.out.println("-------------------------------------------------------------------------------------");
+            list.forEach(System.out::println);
             System.out.println("-------------------------------------------------------------------------------------");
 
         } catch (RuntimeException e) {
