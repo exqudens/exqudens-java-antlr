@@ -63,11 +63,9 @@ public interface ParseTreeProcessor {
                 .stream()
                 .filter(t -> {
                     String name = toString(t.getParseTree(), ruleNames);
-                    if (name.equals(Constants.CONTROL_NODE_NAME_PROCESS) || name.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)) {
-                        return true;
-                    } else {
-                        return neededRuleNames.contains(name);
-                    }
+                    return name.equals(Constants.CONTROL_NODE_NAME_PROCESS)
+                        || name.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)
+                        || neededRuleNames.contains(name);
                 }).collect(Collectors.toList());
 
             if (filterTreePath.isEmpty()) {
@@ -94,12 +92,8 @@ public interface ParseTreeProcessor {
                     id = incrementMap.get(ruleName).getAndIncrement();
                 }
 
-                if (Constants.CONTROL_NODE_NAME_PROCESS.equals(ruleName)) {
-                    key.add(ruleName);
-                } else {
-                    key.add(ruleName);
-                    key.add(String.valueOf(id));
-                }
+                key.add(ruleName);
+                key.add(String.valueOf(id));
             }
 
             String value = toString(tree.getParseTree(), ruleNames);
