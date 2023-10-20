@@ -143,9 +143,9 @@ public class IntegrationTests {
 
                 "<rule>",
                 "  <parser name='identifier'>( letter | NUMBER | DASH | UNDER_LINE | DOT )+</parser>",
-                "</rule><repeat produce='orders'>OrderNumber\\< <identifier name='order_number' delimiter='-'/>",
+                "</rule><repeat>OrderNumber\\< <identifier name='order_number' delimiter='-'/>",
                 "<or><area>  Items:</area><area>  items:</area></or>",
-                "<repeat produce='items'><repeat><spaces/><identifier name='item_description'/><spaces/>$<numbers name='item_price'/><optional>zzz</optional></repeat>",
+                "<repeat><repeat><spaces/><identifier name='item_description'/><spaces/>$<numbers name='item_price'/><optional>zzz</optional></repeat>",
                 "</repeat></repeat><eof/>"
             );
 
