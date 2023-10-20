@@ -41,12 +41,12 @@ public interface ParseTreeProcessor {
         Map<List<String>, String> map = new LinkedHashMap<>();
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
-        for (Tree descendant : treeProcessor.getDescendants(rootTree)) {
-            if (!(descendant.getParseTree() instanceof TerminalNode)) {
+        for (Tree tree : treeProcessor.getDescendants(rootTree)) {
+            if (!(tree.getParseTree() instanceof TerminalNode)) {
                 continue;
             }
 
-            List<Tree> treePath = treeProcessor.getTreePath(descendant);
+            List<Tree> treePath = treeProcessor.getTreePath(tree);
             Optional<String> optional = treePath
                 .stream()
                 .map(Tree::getParseTree)
@@ -75,6 +75,7 @@ public interface ParseTreeProcessor {
             }
 
             List<String> key = new ArrayList<>();
+
             for (Tree t : filterTreePath) {
                 String ruleName = toString(t.getParseTree(), ruleNames);
                 Long id;
@@ -100,7 +101,10 @@ public interface ParseTreeProcessor {
                     key.add(String.valueOf(id));
                 }
             }
-            map.putIfAbsent(key, toString(descendant.getParseTree(), ruleNames));
+
+            String value = toString(tree.getParseTree(), ruleNames);
+
+            map.putIfAbsent(key, value);
         }
 
         return map;
