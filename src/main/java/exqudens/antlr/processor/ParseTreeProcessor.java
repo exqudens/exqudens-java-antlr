@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,7 +27,25 @@ public interface ParseTreeProcessor {
     }
 
     default Map<String, Object> toTreeMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+        AtomicLong increment = new AtomicLong(0);
+        Tree rootTree = toTree(null, increment, parseTree);
+        TreeProcessor treeProcessor = TreeProcessor.newInstance();
+        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
+            if (tree.getParseTree() instanceof TerminalNode) {
+                List<Long> intPath = treeProcessor.getIdPath(tree);
+                System.out.println(intPath + ": '" + toString(tree.getParseTree(), ruleNames) + "'");
+            }
+        }
         return null;
+    }
+
+    default Tree toTree(Tree parent, AtomicLong increment, ParseTree parseTree) {
+        Tree tree = new Tree(increment.getAndIncrement(), parseTree, parent, new ArrayList<>());
+        int n = parseTree.getChildCount();
+        for (int i = 0 ; i < n ; i++) {
+            tree.getChildren().add(toTree(tree, increment, parseTree.getChild(i)));
+        }
+        return tree;
     }
 
     default List<Entry<List<String>, String>> toEntryList(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
@@ -37,11 +56,11 @@ public interface ParseTreeProcessor {
     default Map<List<String>, String> toOrderedMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
         Tree rootTree = toTree(null, 0, parseTree);
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
-        Map<String, Map<List<Integer>, Long>> repeatIdMap = new HashMap<>();
+        Map<String, Map<List<Long>, Long>> repeatIdMap = new HashMap<>();
         Map<String, AtomicLong> incrementMap = new HashMap<>();
         Map<List<String>, String> map = new LinkedHashMap<>();
 
-        for (Tree tree : treeProcessor.getDescendants(rootTree)) {
+        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
             if (!(tree.getParseTree() instanceof TerminalNode)) {
                 continue;
             }
@@ -82,7 +101,7 @@ public interface ParseTreeProcessor {
                 } else if (ruleName.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)) {
                     repeatIdMap.putIfAbsent(ruleName, new HashMap<>());
                     incrementMap.putIfAbsent(ruleName, new AtomicLong(0));
-                    List<Integer> integerPath = treeProcessor.getIntegerPath(t);
+                    List<Long> integerPath = treeProcessor.getIdPath(t);
                     if (!repeatIdMap.get(ruleName).containsKey(integerPath)) {
                         repeatIdMap.get(ruleName).putIfAbsent(integerPath, incrementMap.get(ruleName).getAndIncrement());
                     }
@@ -117,7 +136,7 @@ public interface ParseTreeProcessor {
         }
     }
 
-    default Tree toTree(Tree parent, Integer index, ParseTree parseTree) {
+    default Tree toTree(Tree parent, long index, ParseTree parseTree) {
         Tree tree = new Tree(index, parseTree, parent, new ArrayList<>());
         int n = parseTree.getChildCount();
         for (int i = 0 ; i < n ; i++) {

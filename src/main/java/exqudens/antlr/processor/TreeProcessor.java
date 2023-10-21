@@ -1,7 +1,11 @@
 package exqudens.antlr.processor;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 import exqudens.antlr.model.Tree;
@@ -10,6 +14,31 @@ public interface TreeProcessor {
 
     static TreeProcessor newInstance() {
         return new TreeProcessor() {};
+    }
+
+    default List<Tree> depthFirstSearch(Tree root) {
+        List<Tree> result = new ArrayList<>();
+        Stack<Tree> container = new Stack<>();
+        container.push(root);
+        while (!container.isEmpty()) {
+            Tree current = container.pop();
+            result.add(current);
+            container.addAll(current.getChildren());
+        }
+        Collections.reverse(result);
+        return result;
+    }
+
+    default List<Tree> breadthFirstSearch(Tree root) {
+        List<Tree> result = new ArrayList<>();
+        Queue<Tree> container = new LinkedList<>();
+        container.add(root);
+        while (!container.isEmpty()) {
+            Tree current = container.remove();
+            result.add(current);
+            container.addAll(current.getChildren());
+        }
+        return result;
     }
 
     default List<Tree> getTreePath(Tree tree) {
@@ -26,8 +55,8 @@ public interface TreeProcessor {
         return path;
     }
 
-    default List<Integer> getIntegerPath(Tree tree) {
-        return getTreePath(tree).stream().map(Tree::getIndex).collect(Collectors.toList());
+    default List<Long> getIdPath(Tree tree) {
+        return getTreePath(tree).stream().map(Tree::getId).collect(Collectors.toList());
     }
 
     default List<Tree> getDescendants(Tree tree) {

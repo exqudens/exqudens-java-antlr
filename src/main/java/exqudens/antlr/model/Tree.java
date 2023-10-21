@@ -6,22 +6,22 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 public class Tree {
 
-    private final Integer index;
+    private final Long id;
     private final ParseTree parseTree;
 
     private final Tree parent;
     private final List<Tree> children;
 
-    public Tree(Integer index, ParseTree parseTree, Tree parent, List<Tree> children) {
+    public Tree(Long id, ParseTree parseTree, Tree parent, List<Tree> children) {
         super();
-        this.index = index;
+        this.id = id;
         this.parseTree = parseTree;
         this.parent = parent;
         this.children = children;
     }
 
-    public Integer getIndex() {
-        return index;
+    public Long getId() {
+        return id;
     }
 
     public ParseTree getParseTree() {
