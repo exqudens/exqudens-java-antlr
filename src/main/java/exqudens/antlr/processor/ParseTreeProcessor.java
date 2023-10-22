@@ -1,6 +1,5 @@
 package exqudens.antlr.processor;
 
-import exqudens.antlr.model.IntermediateTree;
 import exqudens.antlr.util.Constants;
 import exqudens.antlr.model.Tree;
 import org.antlr.v4.runtime.RuleContext;
@@ -29,15 +28,15 @@ public interface ParseTreeProcessor {
 
     default Map<String, Object> toTreeMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
         Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(parseTree, ruleNames, neededRuleNames, true);
-        IntermediateTree rootIntermediateTree = toIntermediateTree(orderedListLongMap, ruleNames);
+        Tree rootIntermediateTree = toResultTree(orderedListLongMap, ruleNames);
 
         // TODO
 
         return null;
     }
 
-    default IntermediateTree toIntermediateTree(Map<List<Long>, ParseTree> orderedListLongMap, String[] ruleNames) {
-        IntermediateTree rootIntermediateTree = null;
+    default Tree toResultTree(Map<List<Long>, ParseTree> orderedListLongMap, String[] ruleNames) {
+        Tree rootTree = null;
 
         for (Entry<List<Long>, ParseTree> internalEntry : orderedListLongMap.entrySet()) {
             List<Long> internalKey = internalEntry.getKey();
@@ -46,7 +45,7 @@ public interface ParseTreeProcessor {
             System.out.println(internalKey + ": '" + internalValue + "'");
         }
 
-        return rootIntermediateTree;
+        return rootTree;
     }
 
     default Map<List<Long>, ParseTree> toOrderedListLongMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames, boolean includeParents) {
@@ -104,7 +103,7 @@ public interface ParseTreeProcessor {
     }
 
     default Tree toTree(Tree parent, AtomicLong increment, ParseTree parseTree) {
-        Tree tree = new Tree(increment.getAndIncrement(), parseTree, parent, new ArrayList<>());
+        Tree tree = new Tree(parent, increment.getAndIncrement(), parseTree, new ArrayList<>());
         int n = parseTree.getChildCount();
         for (int i = 0 ; i < n ; i++) {
             tree.getChildren().add(toTree(tree, increment, parseTree.getChild(i)));
@@ -201,7 +200,7 @@ public interface ParseTreeProcessor {
     }
 
     default Tree toTree(Tree parent, long index, ParseTree parseTree) {
-        Tree tree = new Tree(index, parseTree, parent, new ArrayList<>());
+        Tree tree = new Tree(parent, index, parseTree, new ArrayList<>());
         int n = parseTree.getChildCount();
         for (int i = 0 ; i < n ; i++) {
             tree.getChildren().add(toTree(tree, i, parseTree.getChild(i)));
