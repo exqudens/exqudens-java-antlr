@@ -13,7 +13,6 @@ public class Tree {
     private final List<Tree> children;
 
     public Tree(Long id, ParseTree parseTree, Tree parent, List<Tree> children) {
-        super();
         this.id = id;
         this.parseTree = parseTree;
         this.parent = parent;

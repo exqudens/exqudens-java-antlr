@@ -15,7 +15,6 @@ public class Rule {
     private final String value;
 
     public Rule(Integer index, String name, String value) {
-        super();
         this.index = !Constants.CONTROL_NODE_NAME_PROCESS.equals(name) ? index : null;
         this.name = name;
         this.fullName = this.index != null ? this.name + "_" + this.index : this.name;
