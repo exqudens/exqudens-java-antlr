@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -70,12 +71,17 @@ public interface TreeProcessor {
         return trees;
     }
 
-    default Tree getTree(List<Integer> path, Tree root) {
+    default Tree getTree(List<Long> path, Tree root) {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(root);
+        if (path.isEmpty()) {
+            return null;
+        }
         Tree tree = root;
         Tree last = root;
         for (int i = 1; i < path.size(); i++) {
-            Integer pathIndex = path.get(i);
-            tree = last.getChildren().get(pathIndex);
+            Long id = path.get(i);
+            tree = last.getChildren().get(id.intValue());
             last = tree;
         }
         return tree;

@@ -9,7 +9,9 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,28 +29,67 @@ public interface ParseTreeProcessor {
     }
 
     default Map<String, Object> toTreeMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
-        Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(parseTree, ruleNames, neededRuleNames, true);
-        Tree rootIntermediateTree = toResultTree(orderedListLongMap, ruleNames);
+        Tree rootResultTree = toResultTree(parseTree, ruleNames, neededRuleNames);
+        TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
-        // TODO
+        for (Tree tree : treeProcessor.depthFirstSearch(rootResultTree)) {
+            if (tree.getParseTree() instanceof TerminalNode) {
+                List<Tree> treePath = treeProcessor.getTreePath(tree);
+
+                List<String> namePath = treePath.stream().map(t -> toString(t.getParseTree(), ruleNames)).collect(Collectors.toList());
+                namePath.remove(namePath.size() - 1);
+                List<Long> idPath = treeProcessor.getIdPath(tree);
+                System.out.println(namePath + ": '" + toString(tree.getParseTree(), ruleNames) + "'");
+            }
+        }
+
+        System.out.println("---");
 
         return null;
     }
 
-    default Tree toResultTree(Map<List<Long>, ParseTree> orderedListLongMap, String[] ruleNames) {
+    default Tree toResultTree(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+        Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(parseTree, ruleNames, neededRuleNames);
         Tree rootTree = null;
+        TreeProcessor treeProcessor = TreeProcessor.newInstance();
+        Map<List<Long>, List<Long>> idIndexPathMap = new HashMap<>();
 
         for (Entry<List<Long>, ParseTree> internalEntry : orderedListLongMap.entrySet()) {
             List<Long> internalKey = internalEntry.getKey();
-            String internalValue = toString(internalEntry.getValue(), ruleNames);
+            ParseTree internalValue = internalEntry.getValue();
 
-            System.out.println(internalKey + ": '" + internalValue + "'");
+            if (idIndexPathMap.containsKey(internalKey)) {
+                throw new RuntimeException("'idIndexPathMap' contains key: " + internalKey);
+            }
+
+            List<Long> key = new ArrayList<>();
+
+            if (rootTree == null) {
+                Long index = 0L;
+                rootTree = new Tree(null, index, internalValue, new ArrayList<>());
+                key.add(index);
+                idIndexPathMap.putIfAbsent(internalKey, key);
+                continue;
+            }
+
+            List<Long> parentIdPath = new ArrayList<>(internalKey);
+            parentIdPath.remove(internalKey.size() - 1);
+            List<Long> parentIndexPath = idIndexPathMap.get(parentIdPath);
+
+            Tree parentTree = treeProcessor.getTree(parentIndexPath, rootTree);
+
+            Long index = Integer.valueOf(parentTree.getChildren().size()).longValue();
+            parentTree.getChildren().add(new Tree(parentTree, index, internalValue, new ArrayList<>()));
+            key.addAll(parentIndexPath);
+            key.add(index);
+
+            idIndexPathMap.putIfAbsent(internalKey, key);
         }
 
         return rootTree;
     }
 
-    default Map<List<Long>, ParseTree> toOrderedListLongMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames, boolean includeParents) {
+    default Map<List<Long>, ParseTree> toOrderedListLongMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
         AtomicLong increment = new AtomicLong(0);
         Tree rootTree = toTree(null, increment, parseTree);
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
@@ -84,18 +125,16 @@ public interface ParseTreeProcessor {
                 .filter(predicate)
                 .collect(Collectors.toList());
 
-            if (includeParents) {
-                List<Tree> path = new ArrayList<>();
+            /*List<Long> key = filteredTreePath.stream().map(Tree::getId).collect(Collectors.toList());
+            ParseTree value = tree.getParseTree();
+            map.putIfAbsent(key, value);*/
 
-                for (Tree t : filteredTreePath) {
-                    path.add(t);
-                    List<Long> key = path.stream().map(Tree::getId).collect(Collectors.toList());
-                    map.putIfAbsent(key, t.getParseTree());
-                }
-            } else {
-                List<Long> key = filteredTreePath.stream().map(Tree::getId).collect(Collectors.toList());
-                ParseTree value = tree.getParseTree();
-                map.putIfAbsent(key, value);
+            List<Tree> path = new ArrayList<>();
+
+            for (Tree t : filteredTreePath) {
+                path.add(t);
+                List<Long> key = path.stream().map(Tree::getId).collect(Collectors.toList());
+                map.putIfAbsent(key, t.getParseTree());
             }
         }
 
