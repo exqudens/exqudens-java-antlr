@@ -18,6 +18,7 @@ public interface TreeProcessor {
     }
 
     default List<Tree> depthFirstSearch(Tree root) {
+        Objects.requireNonNull(root);
         List<Tree> result = new ArrayList<>();
         Stack<Tree> container = new Stack<>();
         container.push(root);

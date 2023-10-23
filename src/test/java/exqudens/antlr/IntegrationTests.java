@@ -185,7 +185,7 @@ public class IntegrationTests {
 
                 "<rule>",
                 "  <parser name='identifier'>( letter | NUMBER | DASH | UNDER_LINE | DOT )+</parser>",
-                "</rule>OrderNumber: <identifier name='order_number' delimiter='-'/>",
+                "</rule>OrderNumber: <identifier/>",
                 "<eof/>"
             );
 

@@ -16,8 +16,8 @@ import org.xml.sax.InputSource;
 
 public interface NodeProcessor {
 
-    static final String DOCUMENT_NODE_NAME = "#document";
-    static final String TEXT_NODE_NAME = "#text";
+    //String DOCUMENT_NODE_NAME = "#document";
+    String TEXT_NODE_NAME = "#text";
 
     static NodeProcessor newInstance() {
         return new NodeProcessor() {};
@@ -25,15 +25,18 @@ public interface NodeProcessor {
 
     default Node createNode(String content) {
         try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Node node = builder.parse(new InputSource(new StringReader(content)));
+            DocumentBuilderFactory factory;
+            DocumentBuilder builder;
+            Node node;
+
+            factory = DocumentBuilderFactory.newInstance();
+            builder = factory.newDocumentBuilder();
+            node = builder.parse(new InputSource(new StringReader(content)));
+
             return node;
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
@@ -77,7 +80,7 @@ public interface NodeProcessor {
         List<Integer> path = new ArrayList<>();
 
         Node sibling = node;
-        Integer index = 0;
+        int index = 0;
         while ((sibling = sibling.getPreviousSibling()) != null) {
             index++;
         }

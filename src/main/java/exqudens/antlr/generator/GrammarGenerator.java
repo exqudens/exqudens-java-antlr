@@ -152,7 +152,7 @@ public interface GrammarGenerator {
 
             String name = nodeName;
             String value;
-            Integer index;
+            int index;
             Rule r;
             if (Node.TEXT_NODE == nodeType) {
                 name = Constants.TEXT;
