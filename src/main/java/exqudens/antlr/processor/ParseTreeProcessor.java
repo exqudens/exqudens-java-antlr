@@ -9,9 +9,7 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public interface ParseTreeProcessor {
 
@@ -49,7 +48,7 @@ public interface ParseTreeProcessor {
     }
 
     default Tree toResultTree(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
-        Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(parseTree, ruleNames, neededRuleNames);
+        Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(parseTree, ruleNames, neededRuleNames, Constants.CONTROL_NODE_NAME_REPEAT);
         Tree rootTree = null;
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
         Map<List<Long>, List<Long>> idIndexPathMap = new HashMap<>();
@@ -89,34 +88,66 @@ public interface ParseTreeProcessor {
         return rootTree;
     }
 
-    default Map<List<Long>, ParseTree> toOrderedListLongMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+    default Map<List<Long>, ParseTree> toOrderedListLongMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames, String... keepControlNames) {
         AtomicLong increment = new AtomicLong(0);
         Tree rootTree = toTree(null, increment, parseTree);
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
         Map<List<Long>, ParseTree> map = new LinkedHashMap<>();
+
+        Predicate<Tree> neededControlNodeNameFilter = t -> {
+            if (t.getParseTree() instanceof RuleNode) {
+                String ruleName = toString(t.getParseTree(), ruleNames);
+                if (keepControlNames.length == 0) {
+                    if (Stream.of(Constants.CONTROL_NODE_NAMES).anyMatch(ruleName::startsWith)) {
+                        return neededRuleNames.contains(ruleName);
+                    }
+                } else {
+                    return Stream.of(keepControlNames).anyMatch(ruleName::startsWith);
+                }
+            }
+            return false;
+        };
 
         for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
             if (!(tree.getParseTree() instanceof TerminalNode)) {
                 continue;
             }
 
-            List<Tree> treePath = treeProcessor.getTreePath(tree);
-            Optional<String> optional = treePath
-                .stream()
-                .map(Tree::getParseTree)
-                .filter(RuleNode.class::isInstance)
-                .map(pt -> toString(pt, ruleNames))
-                .filter(neededRuleNames::contains)
-                .findFirst();
+            boolean neededTerminalNode = false;
 
-            if (!optional.isPresent()) {
+            List<Tree> treePath = treeProcessor.getTreePath(tree);
+
+            Set<String> neededControlRuleNames = treePath
+                .stream()
+                .filter(neededControlNodeNameFilter)
+                .map(t -> toString(t.getParseTree(), ruleNames))
+                .collect(Collectors.toSet());
+
+            if (neededControlRuleNames.isEmpty()) {
+                neededTerminalNode = treePath
+                    .stream()
+                    .map(Tree::getParseTree)
+                    .filter(RuleNode.class::isInstance)
+                    .map(pt -> toString(pt, ruleNames))
+                    .anyMatch(neededRuleNames::contains);
+            } else {
+                neededTerminalNode = treePath
+                    .stream()
+                    .filter(t -> !neededControlNodeNameFilter.test(t))
+                    .map(Tree::getParseTree)
+                    .filter(RuleNode.class::isInstance)
+                    .map(pt -> toString(pt, ruleNames))
+                    .anyMatch(neededRuleNames::contains);
+            }
+
+            if (!neededTerminalNode) {
                 continue;
             }
 
             Predicate<Tree> predicate = t -> {
                 String name = toString(t.getParseTree(), ruleNames);
                 return name.equals(Constants.CONTROL_NODE_NAME_PROCESS)
-                    || name.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)
+                    || neededControlRuleNames.contains(name)
                     || neededRuleNames.contains(name)
                     || t.getParseTree() instanceof TerminalNode;
             };
@@ -125,9 +156,9 @@ public interface ParseTreeProcessor {
                 .filter(predicate)
                 .collect(Collectors.toList());
 
-            /*List<Long> key = filteredTreePath.stream().map(Tree::getId).collect(Collectors.toList());
-            ParseTree value = tree.getParseTree();
-            map.putIfAbsent(key, value);*/
+            if (filteredTreePath.isEmpty()) {
+                continue;
+            }
 
             List<Tree> path = new ArrayList<>();
 
