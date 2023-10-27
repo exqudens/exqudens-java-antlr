@@ -1,6 +1,7 @@
 package exqudens.antlr;
 
 import exqudens.antlr.model.ParsingResult;
+import exqudens.antlr.util.Constants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -8,6 +9,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -91,16 +93,23 @@ public class IntegrationTests {
 
         System.out.println("jarFile: '" + jarFile + "'");
 
+        String[] command = {
+            "cmd.exe", "/c", javaCommand, "-jar", jarFile,
+            //"--" + Application.LONG_OPT_HELP,
+            "--" + Application.LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL, String.valueOf(true),
+            "--" + Application.LONG_OPT_TERMINAL_ONLY, String.valueOf(false),
+            "--" + Application.LONG_OPT_FILTER_TREE, String.valueOf(true),
+            "--" + Application.LONG_OPT_KEEP_CONTROL_NAMES, Constants.CONTROL_NODE_NAME_REPEAT, Constants.CONTROL_NODE_NAME_AREA,
+            "--" + Application.LONG_OPT_INPUT_FILE, resourcesDir.resolve("input-file.txt").toFile().getAbsolutePath(),
+            "--" + Application.LONG_OPT_TEMPLATE_FILE, resourcesDir.resolve("template-file.txt").toFile().getAbsolutePath(),
+            "--" + Application.LONG_OPT_OUTPUT_INDENT_FACTOR, "4",
+            "--" + Application.LONG_OPT_OUTPUT_DIR, testDir.resolve("output").toFile().getAbsolutePath()
+        };
+
+        System.out.println("command: '" + Arrays.toString(command) + "'");
+
         Process process = new ProcessBuilder()
-            .command(
-                "cmd.exe", "/c", javaCommand, "-jar", jarFile,
-                //"--" + Application.LONG_OPT_HELP,
-                "--" + Application.LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL, "true",
-                "--" + Application.LONG_OPT_INPUT_FILE, resourcesDir.resolve("input-file.txt").toFile().getAbsolutePath(),
-                "--" + Application.LONG_OPT_TEMPLATE_FILE, resourcesDir.resolve("template-file.txt").toFile().getAbsolutePath(),
-                "--" + Application.LONG_OPT_OUTPUT_INDENT_FACTOR, "4",
-                "--" + Application.LONG_OPT_OUTPUT_DIR, testDir.resolve("output").toFile().getAbsolutePath()
-            )
+            .command(command)
             .directory(projectDir.toFile())
             .start();
 
@@ -149,7 +158,15 @@ public class IntegrationTests {
                 "</repeat></repeat><eof/>"
             );
 
-            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
+            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(
+                text,
+                template,
+                "Exqudens",
+                getClass().getPackage().getName(),
+                false,
+                true,
+                Constants.CONTROL_NODE_NAME_REPEAT, Constants.CONTROL_NODE_NAME_AREA
+            );
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
             List<Entry<List<String>, String>> list = parsingResult.getList();
 
@@ -189,7 +206,15 @@ public class IntegrationTests {
                 "<eof/>"
             );
 
-            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(text, template, "Exqudens", "org", "exqudens");
+            ParsingResult parsingResult = ExqudensParserAntlr.newInstance().parse(
+                text,
+                template,
+                "Exqudens",
+                getClass().getPackage().getName(),
+                false,
+                true,
+                Constants.CONTROL_NODE_NAME_REPEAT
+            );
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
             List<Entry<List<String>, String>> list = parsingResult.getList();
 

@@ -1,6 +1,7 @@
 package exqudens.antlr;
 
 import exqudens.antlr.model.ParsingResult;
+import exqudens.antlr.util.Constants;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -27,6 +28,9 @@ public interface Application {
     String LONG_OPT_HELP = "help";
     String LONG_OPT_CHARSET = "charset";
     String LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL = "template-new-line-universal";
+    String LONG_OPT_TERMINAL_ONLY = "terminal-only";
+    String LONG_OPT_FILTER_TREE = "filter-tree";
+    String LONG_OPT_KEEP_CONTROL_NAMES = "keep-control-names";
     String LONG_OPT_INPUT_STRING = "input-string";
     String LONG_OPT_INPUT_FILE = "input-file";
     String LONG_OPT_TEMPLATE_STRING = "template-string";
@@ -55,6 +59,23 @@ public interface Application {
                 .longOpt(LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL)
                 .type(String.class)
                 .hasArg()
+                .build();
+            Option terminalOnlyOption = Option
+                .builder()
+                .longOpt(LONG_OPT_TERMINAL_ONLY)
+                .type(String.class)
+                .hasArg()
+                .build();
+            Option filterTreeOption = Option
+                .builder()
+                .longOpt(LONG_OPT_FILTER_TREE)
+                .type(String.class)
+                .hasArg()
+                .build();
+            Option keepControlNamesOption = Option.builder()
+                .longOpt(LONG_OPT_KEEP_CONTROL_NAMES)
+                .type(String.class)
+                .hasArgs()
                 .build();
             Option inputStringOption = Option
                 .builder()
@@ -98,6 +119,9 @@ public interface Application {
             options.addOption(helpOption);
             options.addOption(charsetOption);
             options.addOption(templateNewLineUniversalOption);
+            options.addOption(terminalOnlyOption);
+            options.addOption(filterTreeOption);
+            options.addOption(keepControlNamesOption);
             options.addOption(inputStringOption);
             options.addOption(inputFileOption);
             options.addOption(templateStringOption);
@@ -119,6 +143,9 @@ public interface Application {
 
             String userCharset = null;
             String userTemplateNewLineUniversal = null;
+            String userTerminalOnly = null;
+            String userFilterTree = null;
+            String[] userKeepControlNames = null;
             String userInputString = null;
             String userInputFile = null;
             String userTemplateString = null;
@@ -131,6 +158,15 @@ public interface Application {
             }
             if (commandLine.hasOption(templateNewLineUniversalOption)) {
                 userTemplateNewLineUniversal = commandLine.getOptionValue(templateNewLineUniversalOption);
+            }
+            if (commandLine.hasOption(terminalOnlyOption)) {
+                userTerminalOnly = commandLine.getOptionValue(terminalOnlyOption);
+            }
+            if (commandLine.hasOption(filterTreeOption)) {
+                userFilterTree = commandLine.getOptionValue(filterTreeOption);
+            }
+            if (commandLine.hasOption(keepControlNamesOption)) {
+                userKeepControlNames = commandLine.getOptionValues(keepControlNamesOption);
             }
             if (commandLine.hasOption(inputStringOption)) {
                 userInputString = commandLine.getOptionValue(inputStringOption);
@@ -155,6 +191,9 @@ public interface Application {
 
             Charset charset = StandardCharsets.UTF_8;
             boolean templateNewLineUniversal = false;
+            boolean terminalOnly = false;
+            boolean filterTree = false;
+            String[] keepControlNames = {};
             String text = null;
             String template = null;
             int outputIndentFactor = 0;
@@ -164,6 +203,15 @@ public interface Application {
             }
             if (userTemplateNewLineUniversal != null) {
                 templateNewLineUniversal = userTemplateNewLineUniversal.equalsIgnoreCase("true");
+            }
+            if (userTerminalOnly != null) {
+                terminalOnly = userTerminalOnly.equalsIgnoreCase("true");
+            }
+            if (userFilterTree != null) {
+                filterTree = userFilterTree.equalsIgnoreCase("true");
+            }
+            if (userKeepControlNames != null) {
+                keepControlNames = userKeepControlNames;
             }
             if (userInputString != null) {
                 text = userInputString;
@@ -199,7 +247,10 @@ public interface Application {
                 text,
                 template,
                 currentMethodName.substring(0, 1).toUpperCase() + currentMethodName.substring(1),
-                getClass().getPackage().getName().split("\\.")
+                getClass().getPackage().getName(),
+                terminalOnly,
+                filterTree,
+                keepControlNames
             );
 
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();

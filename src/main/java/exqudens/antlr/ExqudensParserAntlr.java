@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public interface ExqudensParserAntlr {
 
@@ -30,19 +31,22 @@ public interface ExqudensParserAntlr {
         String text,
         String template,
         String simpleClassName,
-        String... pack
+        String packageName,
+        boolean terminalOnly,
+        boolean filterTree,
+        String... keepControlNames
     ) {
         try {
             Entry<String, Map<String, Map<String, String>>> grammarEntry = GrammarGenerator.newInstance().toGrammarEntry(template, simpleClassName);
             String grammarFileName = simpleClassName + "." + Constants.GRAMMAR_EXTENSION;
             String grammar = grammarEntry.getKey();
 
-            Map<String, String> javaFiles = JavaGenerator.newInstance().generateJavaFiles(grammarFileName, grammar, String.join(".", pack));
+            Map<String, String> javaFiles = JavaGenerator.newInstance().generateJavaFiles(grammarFileName, grammar, packageName);
             Map<String, byte[]> classFiles = ClassGenerator.newInstance().generateClassFiles(javaFiles);
             ClassLoader classLoader = ClassLoaderGenerator.newInstance().generateClassLoader(getClass().getClassLoader(), classFiles);
             CharStream charStream = CharStreams.fromString(text);
 
-            Class<?> lexerClass = classLoader.loadClass(String.join(".", pack) + "." + simpleClassName + Constants.LEXER);
+            Class<?> lexerClass = classLoader.loadClass(packageName + "." + simpleClassName + Constants.LEXER);
             Object lexerObject = lexerClass.getConstructor(CharStream.class).newInstance(charStream);
             Lexer lexer = (Lexer) lexerObject;
 
@@ -51,7 +55,7 @@ public interface ExqudensParserAntlr {
 
             TokenStream tokenStream = new CommonTokenStream(lexer);
 
-            Class<?> parserClass = classLoader.loadClass(String.join(".", pack) + "." + simpleClassName + Constants.PARSER);
+            Class<?> parserClass = classLoader.loadClass(packageName + "." + simpleClassName + Constants.PARSER);
             Object parserObject = parserClass.getConstructor(TokenStream.class).newInstance(tokenStream);
             Parser parser = (Parser) parserObject;
 
@@ -64,8 +68,22 @@ public interface ExqudensParserAntlr {
             String[] ruleNames = parser.getRuleNames();
 
             Map<String, Map<String, String>> configuration = grammarEntry.getValue();
-            List<Entry<List<String>, String>> list = ParseTreeProcessor.newInstance().toEntryList(parseTree, ruleNames, configuration.keySet());
-            Map<String, Object> map = ParseTreeProcessor.newInstance().toTreeMap(parseTree, ruleNames, configuration.keySet());
+            List<Entry<List<String>, String>> list = ParseTreeProcessor.newInstance().toEntryList(
+                parseTree,
+                ruleNames,
+                terminalOnly,
+                filterTree,
+                configuration.keySet(),
+                keepControlNames
+            );
+            Map<String, Object> map = ParseTreeProcessor.newInstance().toTreeMap(
+                parseTree,
+                ruleNames,
+                terminalOnly,
+                filterTree,
+                configuration.keySet(),
+                keepControlNames
+            );
 
             return new ParsingResult(
                 grammarFileName,

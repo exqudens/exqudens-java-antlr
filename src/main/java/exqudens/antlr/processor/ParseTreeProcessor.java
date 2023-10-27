@@ -9,13 +9,11 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
@@ -28,19 +26,36 @@ public interface ParseTreeProcessor {
         return new ParseTreeProcessor() {};
     }
 
-    default Map<String, Object> toTreeMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
-        Tree rootResultTree = toResultTree(parseTree, ruleNames, neededRuleNames);
+    default Map<String, Object> toTreeMap(
+        ParseTree parseTree,
+        String[] ruleNames,
+        boolean terminalOnly,
+        boolean filterTree,
+        Set<String> neededRuleNames,
+        String... keepControlNames
+    ) {
+        Tree rootTree = toTree(
+            parseTree,
+            ruleNames,
+            terminalOnly,
+            filterTree,
+            neededRuleNames,
+            keepControlNames
+        );
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
-        for (Tree tree : treeProcessor.depthFirstSearch(rootResultTree)) {
-            if (tree.getParseTree() instanceof TerminalNode) {
-                List<Tree> treePath = treeProcessor.getTreePath(tree);
-
-                List<String> namePath = treePath.stream().map(t -> toString(t.getParseTree(), ruleNames)).collect(Collectors.toList());
-                namePath.remove(namePath.size() - 1);
-                List<Long> idPath = treeProcessor.getIdPath(tree);
-                System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
+        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
+            if (!(tree.getParseTree() instanceof TerminalNode)) {
+                continue;
             }
+
+            List<Tree> treePath = treeProcessor.getTreePath(tree);
+
+            List<String> namePath = treePath.stream().map(t -> toString(t.getParseTree(), ruleNames)).collect(Collectors.toList());
+            namePath.remove(namePath.size() - 1);
+
+            List<Long> idPath = treeProcessor.getIdPath(tree);
+            //System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
         }
 
         System.out.println("---");
@@ -48,14 +63,94 @@ public interface ParseTreeProcessor {
         return null;
     }
 
-    default Tree toResultTree(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
+    default List<Entry<List<String>, String>> toEntryList(
+        ParseTree parseTree,
+        String[] ruleNames,
+        boolean terminalOnly,
+        boolean filterTree,
+        Set<String> neededRuleNames,
+        String... keepControlNames
+    ) {
+        Map<List<String>, String> map = toOrderedListStringMap(
+            parseTree,
+            ruleNames,
+            terminalOnly,
+            filterTree,
+            neededRuleNames,
+            keepControlNames
+        );
+        return new ArrayList<>(map.entrySet());
+    }
+
+    default Map<List<String>, String> toOrderedListStringMap(
+        ParseTree parseTree,
+        String[] ruleNames,
+        boolean terminalOnly,
+        boolean filterTree,
+        Set<String> neededRuleNames,
+        String... keepControlNames
+    ) {
+        Tree rootTree = toTree(
+            parseTree,
+            ruleNames,
+            terminalOnly,
+            filterTree,
+            neededRuleNames,
+            keepControlNames
+        );
+        TreeProcessor treeProcessor = TreeProcessor.newInstance();
+        Map<List<String>, String> map = new LinkedHashMap<>();
+
+        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
+            if (!(tree.getParseTree() instanceof TerminalNode)) {
+                continue;
+            }
+
+            List<Tree> treePath = treeProcessor.getTreePath(tree);
+            treePath.remove(treePath.size() - 1);
+
+            List<String> key = new ArrayList<>();
+
+            for (int i = 0; i < treePath.size(); i++) {
+                String ruleName = toString(treePath.get(i).getParseTree(), ruleNames);
+                Long id;
+
+                if (i == treePath.size() - 1) {
+                    id = tree.getId();
+                } else {
+                    id = treePath.get(i).getId();
+                }
+
+                key.add(ruleName);
+
+                if (!ruleName.equals(Constants.CONTROL_NODE_NAME_PROCESS)) {
+                    key.add(String.valueOf(id));
+                }
+            }
+
+            String value = toString(tree.getParseTree(), ruleNames);
+
+            map.putIfAbsent(key, value);
+        }
+
+        return map;
+    }
+
+    default Tree toTree(
+        ParseTree parseTree,
+        String[] ruleNames,
+        boolean terminalOnly,
+        boolean filterTree,
+        Set<String> neededRuleNames,
+        String... keepControlNames
+    ) {
         Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(
             parseTree,
             ruleNames,
-            neededRuleNames.isEmpty(),
-            !neededRuleNames.isEmpty(),
+            terminalOnly,
+            filterTree,
             neededRuleNames,
-            Constants.CONTROL_NODE_NAME_REPEAT
+            keepControlNames
         );
         Tree rootTree = null;
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
@@ -94,6 +189,28 @@ public interface ParseTreeProcessor {
         }
 
         return rootTree;
+    }
+
+    default String toString(ParseTree parseTree, String[] ruleNames) {
+        if (parseTree instanceof ErrorNode) {
+            return parseTree.getText();
+        } else if (parseTree instanceof TerminalNode) {
+            return parseTree.getText();
+        } else if (parseTree instanceof RuleNode) {
+            int ruleIndex = ((RuleContext)parseTree).getRuleIndex();
+            return ruleNames[ruleIndex];
+        } else {
+            throw new IllegalArgumentException("Unsupported type: '" + parseTree.getClass().getName() + "'");
+        }
+    }
+
+    default Tree toTree(Tree parent, AtomicLong increment, ParseTree parseTree) {
+        Tree tree = new Tree(parent, increment.getAndIncrement(), parseTree, new ArrayList<>());
+        int n = parseTree.getChildCount();
+        for (int i = 0 ; i < n ; i++) {
+            tree.getChildren().add(toTree(tree, increment, parseTree.getChild(i)));
+        }
+        return tree;
     }
 
     default Map<List<Long>, ParseTree> toOrderedListLongMap(
@@ -136,7 +253,7 @@ public interface ParseTreeProcessor {
 
             List<Tree> treePath = treeProcessor.getTreePath(tree);
 
-            if (filterTree) {
+            if (filterTree && !terminalOnly) {
                 Set<String> neededControlRuleNames = treePath
                     .stream()
                     .filter(neededControlNodeNameFilter)
@@ -155,11 +272,10 @@ public interface ParseTreeProcessor {
                 } else {
                     neededTerminalNode = treePath
                         .stream()
-                        .filter(t -> !neededControlNodeNameFilter.test(t))
                         .map(Tree::getParseTree)
                         .filter(RuleNode.class::isInstance)
                         .map(pt -> toString(pt, ruleNames))
-                        .anyMatch(neededRuleNames::contains);
+                        .anyMatch(neededControlRuleNames::contains);
                 }
 
                 if (!neededTerminalNode) {
@@ -177,9 +293,7 @@ public interface ParseTreeProcessor {
                     .stream()
                     .filter(predicate)
                     .collect(Collectors.toList());
-            }
-
-            if (terminalOnly) {
+            } else if (!filterTree && terminalOnly) {
                 treePath = treePath
                     .stream()
                     .filter(t -> {
@@ -207,112 +321,6 @@ public interface ParseTreeProcessor {
         }
 
         return map;
-    }
-
-    default Tree toTree(Tree parent, AtomicLong increment, ParseTree parseTree) {
-        Tree tree = new Tree(parent, increment.getAndIncrement(), parseTree, new ArrayList<>());
-        int n = parseTree.getChildCount();
-        for (int i = 0 ; i < n ; i++) {
-            tree.getChildren().add(toTree(tree, increment, parseTree.getChild(i)));
-        }
-        return tree;
-    }
-
-    default List<Entry<List<String>, String>> toEntryList(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
-        Map<List<String>, String> map = toOrderedListStringMap(parseTree, ruleNames, neededRuleNames);
-        return new ArrayList<>(map.entrySet());
-    }
-
-    default Map<List<String>, String> toOrderedListStringMap(ParseTree parseTree, String[] ruleNames, Set<String> neededRuleNames) {
-        Tree rootTree = toTree(null, 0, parseTree);
-        TreeProcessor treeProcessor = TreeProcessor.newInstance();
-        Map<String, Map<List<Long>, Long>> repeatIdMap = new HashMap<>();
-        Map<String, AtomicLong> incrementMap = new HashMap<>();
-        Map<List<String>, String> map = new LinkedHashMap<>();
-
-        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
-            if (!(tree.getParseTree() instanceof TerminalNode)) {
-                continue;
-            }
-
-            List<Tree> treePath = treeProcessor.getTreePath(tree);
-            Optional<String> optional = treePath
-                .stream()
-                .map(Tree::getParseTree)
-                .filter(RuleNode.class::isInstance)
-                .map(pt -> toString(pt, ruleNames))
-                .filter(neededRuleNames::contains)
-                .findFirst();
-
-            if (!optional.isPresent()) {
-                continue;
-            }
-
-            List<Tree> filterTreePath = treePath
-                .stream()
-                .filter(t -> {
-                    String name = toString(t.getParseTree(), ruleNames);
-                    return name.equals(Constants.CONTROL_NODE_NAME_PROCESS)
-                        || name.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)
-                        || neededRuleNames.contains(name);
-                }).collect(Collectors.toList());
-
-            if (filterTreePath.isEmpty()) {
-                continue;
-            }
-
-            List<String> key = new ArrayList<>();
-
-            for (Tree t : filterTreePath) {
-                String ruleName = toString(t.getParseTree(), ruleNames);
-                Long id;
-                if (Constants.CONTROL_NODE_NAME_PROCESS.equals(ruleName)) {
-                    id = 0L;
-                } else if (ruleName.startsWith(Constants.CONTROL_NODE_NAME_REPEAT)) {
-                    repeatIdMap.putIfAbsent(ruleName, new HashMap<>());
-                    incrementMap.putIfAbsent(ruleName, new AtomicLong(0));
-                    List<Long> integerPath = treeProcessor.getIdPath(t);
-                    if (!repeatIdMap.get(ruleName).containsKey(integerPath)) {
-                        repeatIdMap.get(ruleName).putIfAbsent(integerPath, incrementMap.get(ruleName).getAndIncrement());
-                    }
-                    id = repeatIdMap.get(ruleName).get(integerPath);
-                } else {
-                    incrementMap.putIfAbsent(ruleName, new AtomicLong(0));
-                    id = incrementMap.get(ruleName).getAndIncrement();
-                }
-
-                key.add(ruleName);
-                key.add(String.valueOf(id));
-            }
-
-            String value = toString(tree.getParseTree(), ruleNames);
-
-            map.putIfAbsent(key, value);
-        }
-
-        return map;
-    }
-
-    default String toString(ParseTree parseTree, String[] ruleNames) {
-        if (parseTree instanceof ErrorNode) {
-            return parseTree.getText();
-        } else if (parseTree instanceof TerminalNode) {
-            return parseTree.getText();
-        } else if (parseTree instanceof RuleNode) {
-            int ruleIndex = ((RuleContext)parseTree).getRuleIndex();
-            return ruleNames[ruleIndex];
-        } else {
-            throw new IllegalArgumentException("Unsupported type: '" + parseTree.getClass().getName() + "'");
-        }
-    }
-
-    default Tree toTree(Tree parent, long index, ParseTree parseTree) {
-        Tree tree = new Tree(parent, index, parseTree, new ArrayList<>());
-        int n = parseTree.getChildCount();
-        for (int i = 0 ; i < n ; i++) {
-            tree.getChildren().add(toTree(tree, i, parseTree.getChild(i)));
-        }
-        return tree;
     }
 
 }
