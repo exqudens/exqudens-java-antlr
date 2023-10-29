@@ -55,7 +55,7 @@ public interface ParseTreeProcessor {
             namePath.remove(namePath.size() - 1);
 
             List<Long> idPath = treeProcessor.getIdPath(tree);
-            //System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
+            System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
         }
 
         System.out.println("---");

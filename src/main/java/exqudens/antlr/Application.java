@@ -1,7 +1,6 @@
 package exqudens.antlr;
 
 import exqudens.antlr.model.ParsingResult;
-import exqudens.antlr.util.Constants;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
