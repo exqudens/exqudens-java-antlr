@@ -1,5 +1,6 @@
 package exqudens.antlr.processor;
 
+import exqudens.antlr.model.Entity;
 import exqudens.antlr.util.Constants;
 import exqudens.antlr.model.Tree;
 import org.antlr.v4.runtime.RuleContext;
@@ -42,6 +43,11 @@ public interface ParseTreeProcessor {
             neededRuleNames,
             keepControlNames
         );
+        Entity rootEntity = toEntity(rootTree, ruleNames);
+        return null;
+    }
+
+    default Entity toEntity(Tree rootTree, String[] ruleNames) {
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
         for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
@@ -59,30 +65,10 @@ public interface ParseTreeProcessor {
         }
 
         System.out.println("---");
-
         return null;
     }
 
     default List<Entry<List<String>, String>> toEntryList(
-        ParseTree parseTree,
-        String[] ruleNames,
-        boolean terminalOnly,
-        boolean filterTree,
-        Set<String> neededRuleNames,
-        String... keepControlNames
-    ) {
-        Map<List<String>, String> map = toOrderedListStringMap(
-            parseTree,
-            ruleNames,
-            terminalOnly,
-            filterTree,
-            neededRuleNames,
-            keepControlNames
-        );
-        return new ArrayList<>(map.entrySet());
-    }
-
-    default Map<List<String>, String> toOrderedListStringMap(
         ParseTree parseTree,
         String[] ruleNames,
         boolean terminalOnly,
@@ -98,6 +84,11 @@ public interface ParseTreeProcessor {
             neededRuleNames,
             keepControlNames
         );
+        Map<List<String>, String> map = toOrderedListStringMap(rootTree, ruleNames);
+        return new ArrayList<>(map.entrySet());
+    }
+
+    default Map<List<String>, String> toOrderedListStringMap(Tree rootTree, String[] ruleNames) {
         TreeProcessor treeProcessor = TreeProcessor.newInstance();
         Map<List<String>, String> map = new LinkedHashMap<>();
 
