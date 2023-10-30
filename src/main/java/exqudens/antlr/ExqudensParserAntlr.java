@@ -32,8 +32,8 @@ public interface ExqudensParserAntlr {
         String template,
         String simpleClassName,
         String packageName,
-        boolean terminalOnly,
         boolean filterTree,
+        boolean terminalOnly,
         String... keepControlNames
     ) {
         try {
@@ -71,16 +71,16 @@ public interface ExqudensParserAntlr {
             List<Entry<List<String>, String>> list = ParseTreeProcessor.newInstance().toEntryList(
                 parseTree,
                 ruleNames,
-                terminalOnly,
                 filterTree,
+                terminalOnly,
                 configuration.keySet(),
                 keepControlNames
             );
             Map<String, Object> map = ParseTreeProcessor.newInstance().toTreeMap(
                 parseTree,
                 ruleNames,
-                terminalOnly,
                 filterTree,
+                terminalOnly,
                 configuration.keySet(),
                 keepControlNames
             );

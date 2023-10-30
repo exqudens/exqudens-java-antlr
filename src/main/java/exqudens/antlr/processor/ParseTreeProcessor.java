@@ -30,16 +30,16 @@ public interface ParseTreeProcessor {
     default Map<String, Object> toTreeMap(
         ParseTree parseTree,
         String[] ruleNames,
-        boolean terminalOnly,
         boolean filterTree,
+        boolean terminalOnly,
         Set<String> neededRuleNames,
         String... keepControlNames
     ) {
         Tree rootTree = toTree(
             parseTree,
             ruleNames,
-            terminalOnly,
             filterTree,
+            terminalOnly,
             neededRuleNames,
             keepControlNames
         );
@@ -61,10 +61,10 @@ public interface ParseTreeProcessor {
             namePath.remove(namePath.size() - 1);
 
             List<Long> idPath = treeProcessor.getIdPath(tree);
-            System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
+            //System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
         }
 
-        System.out.println("---");
+        //System.out.println("---");
         return null;
     }
 
@@ -79,8 +79,8 @@ public interface ParseTreeProcessor {
         Tree rootTree = toTree(
             parseTree,
             ruleNames,
-            terminalOnly,
             filterTree,
+            terminalOnly,
             neededRuleNames,
             keepControlNames
         );
@@ -130,16 +130,16 @@ public interface ParseTreeProcessor {
     default Tree toTree(
         ParseTree parseTree,
         String[] ruleNames,
-        boolean terminalOnly,
         boolean filterTree,
+        boolean terminalOnly,
         Set<String> neededRuleNames,
         String... keepControlNames
     ) {
         Map<List<Long>, ParseTree> orderedListLongMap = toOrderedListLongMap(
             parseTree,
             ruleNames,
-            terminalOnly,
             filterTree,
+            terminalOnly,
             neededRuleNames,
             keepControlNames
         );
@@ -207,8 +207,8 @@ public interface ParseTreeProcessor {
     default Map<List<Long>, ParseTree> toOrderedListLongMap(
         ParseTree parseTree,
         String[] ruleNames,
-        boolean terminalOnly,
         boolean filterTree,
+        boolean terminalOnly,
         Set<String> neededRuleNames,
         String... keepControlNames
     ) {
@@ -219,7 +219,7 @@ public interface ParseTreeProcessor {
 
         Predicate<Tree> neededControlNodeNameFilter;
 
-        if (filterTree) {
+        if (filterTree && !terminalOnly) {
             neededControlNodeNameFilter = t -> {
                 if (t.getParseTree() instanceof RuleNode) {
                     String ruleName = toString(t.getParseTree(), ruleNames);
@@ -244,58 +244,55 @@ public interface ParseTreeProcessor {
 
             List<Tree> treePath = treeProcessor.getTreePath(tree);
 
-            if (filterTree && !terminalOnly) {
-                Set<String> neededControlRuleNames = treePath
-                    .stream()
-                    .filter(neededControlNodeNameFilter)
-                    .map(t -> toString(t.getParseTree(), ruleNames))
-                    .collect(Collectors.toSet());
-
-                boolean neededTerminalNode;
-
-                if (neededControlRuleNames.isEmpty()) {
-                    neededTerminalNode = treePath
+            if (filterTree) {
+                if (terminalOnly) {
+                    treePath = treePath
                         .stream()
-                        .map(Tree::getParseTree)
-                        .filter(RuleNode.class::isInstance)
-                        .map(pt -> toString(pt, ruleNames))
-                        .anyMatch(neededRuleNames::contains);
+                        .filter(t -> {
+                            if (t.getParseTree() instanceof TerminalNode) {
+                                return true;
+                            } else {
+                                String name = toString(t.getParseTree(), ruleNames);
+                                return name.equals(Constants.CONTROL_NODE_NAME_PROCESS);
+                            }
+                        })
+                        .collect(Collectors.toList());
                 } else {
-                    neededTerminalNode = treePath
+                    boolean neededTerminalNode;
+
+                    if (neededRuleNames.isEmpty()) {
+                        neededTerminalNode = true;
+                    } else {
+                        neededTerminalNode = treePath
+                            .stream()
+                            .map(Tree::getParseTree)
+                            .filter(RuleNode.class::isInstance)
+                            .map(pt -> toString(pt, ruleNames))
+                            .anyMatch(neededRuleNames::contains);
+                    }
+
+                    if (!neededTerminalNode) {
+                        continue;
+                    }
+
+                    Set<String> neededControlRuleNames = treePath
                         .stream()
-                        .map(Tree::getParseTree)
-                        .filter(RuleNode.class::isInstance)
-                        .map(pt -> toString(pt, ruleNames))
-                        .anyMatch(neededControlRuleNames::contains);
-                }
+                        .filter(neededControlNodeNameFilter)
+                        .map(t -> toString(t.getParseTree(), ruleNames))
+                        .collect(Collectors.toSet());
 
-                if (!neededTerminalNode) {
-                    continue;
+                    Predicate<Tree> predicate = t -> {
+                        String name = toString(t.getParseTree(), ruleNames);
+                        return name.equals(Constants.CONTROL_NODE_NAME_PROCESS)
+                            || neededControlRuleNames.contains(name)
+                            || neededRuleNames.contains(name)
+                            || t.getParseTree() instanceof TerminalNode;
+                    };
+                    treePath = treePath
+                        .stream()
+                        .filter(predicate)
+                        .collect(Collectors.toList());
                 }
-
-                Predicate<Tree> predicate = t -> {
-                    String name = toString(t.getParseTree(), ruleNames);
-                    return name.equals(Constants.CONTROL_NODE_NAME_PROCESS)
-                        || neededControlRuleNames.contains(name)
-                        || neededRuleNames.contains(name)
-                        || t.getParseTree() instanceof TerminalNode;
-                };
-                treePath = treePath
-                    .stream()
-                    .filter(predicate)
-                    .collect(Collectors.toList());
-            } else if (!filterTree && terminalOnly) {
-                treePath = treePath
-                    .stream()
-                    .filter(t -> {
-                        if (t.getParseTree() instanceof TerminalNode) {
-                            return true;
-                        } else {
-                            String name = toString(t.getParseTree(), ruleNames);
-                            return name.equals(Constants.CONTROL_NODE_NAME_PROCESS);
-                        }
-                    })
-                    .collect(Collectors.toList());
             }
 
             if (treePath.isEmpty()) {

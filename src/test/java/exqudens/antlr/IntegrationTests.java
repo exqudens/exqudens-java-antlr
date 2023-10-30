@@ -97,8 +97,8 @@ public class IntegrationTests {
             "cmd.exe", "/c", javaCommand, "-jar", jarFile,
             //"--" + Application.LONG_OPT_HELP,
             "--" + Application.LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL, String.valueOf(true),
-            "--" + Application.LONG_OPT_TERMINAL_ONLY, String.valueOf(false),
             "--" + Application.LONG_OPT_FILTER_TREE, String.valueOf(true),
+            "--" + Application.LONG_OPT_TERMINAL_ONLY, String.valueOf(false),
             "--" + Application.LONG_OPT_KEEP_CONTROL_NAMES, Constants.CONTROL_NODE_NAME_REPEAT, Constants.CONTROL_NODE_NAME_AREA,
             "--" + Application.LONG_OPT_INPUT_FILE, resourcesDir.resolve("input-file.txt").toFile().getAbsolutePath(),
             "--" + Application.LONG_OPT_TEMPLATE_FILE, resourcesDir.resolve("template-file.txt").toFile().getAbsolutePath(),
@@ -163,8 +163,8 @@ public class IntegrationTests {
                 template,
                 "Exqudens",
                 getClass().getPackage().getName(),
-                false,
                 true,
+                false,
                 Constants.CONTROL_NODE_NAME_REPEAT, Constants.CONTROL_NODE_NAME_AREA
             );
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
@@ -211,9 +211,9 @@ public class IntegrationTests {
                 template,
                 "Exqudens",
                 getClass().getPackage().getName(),
-                false,
                 true,
-                Constants.CONTROL_NODE_NAME_REPEAT
+                false,
+                "identifier_0"
             );
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
             List<Entry<List<String>, String>> list = parsingResult.getList();

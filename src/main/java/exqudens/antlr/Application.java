@@ -27,8 +27,8 @@ public interface Application {
     String LONG_OPT_HELP = "help";
     String LONG_OPT_CHARSET = "charset";
     String LONG_OPT_TEMPLATE_NEW_LINE_UNIVERSAL = "template-new-line-universal";
-    String LONG_OPT_TERMINAL_ONLY = "terminal-only";
     String LONG_OPT_FILTER_TREE = "filter-tree";
+    String LONG_OPT_TERMINAL_ONLY = "terminal-only";
     String LONG_OPT_KEEP_CONTROL_NAMES = "keep-control-names";
     String LONG_OPT_INPUT_STRING = "input-string";
     String LONG_OPT_INPUT_FILE = "input-file";
@@ -59,15 +59,15 @@ public interface Application {
                 .type(String.class)
                 .hasArg()
                 .build();
-            Option terminalOnlyOption = Option
-                .builder()
-                .longOpt(LONG_OPT_TERMINAL_ONLY)
-                .type(String.class)
-                .hasArg()
-                .build();
             Option filterTreeOption = Option
                 .builder()
                 .longOpt(LONG_OPT_FILTER_TREE)
+                .type(String.class)
+                .hasArg()
+                .build();
+            Option terminalOnlyOption = Option
+                .builder()
+                .longOpt(LONG_OPT_TERMINAL_ONLY)
                 .type(String.class)
                 .hasArg()
                 .build();
@@ -118,8 +118,8 @@ public interface Application {
             options.addOption(helpOption);
             options.addOption(charsetOption);
             options.addOption(templateNewLineUniversalOption);
-            options.addOption(terminalOnlyOption);
             options.addOption(filterTreeOption);
+            options.addOption(terminalOnlyOption);
             options.addOption(keepControlNamesOption);
             options.addOption(inputStringOption);
             options.addOption(inputFileOption);
@@ -142,8 +142,8 @@ public interface Application {
 
             String userCharset = null;
             String userTemplateNewLineUniversal = null;
-            String userTerminalOnly = null;
             String userFilterTree = null;
+            String userTerminalOnly = null;
             String[] userKeepControlNames = null;
             String userInputString = null;
             String userInputFile = null;
@@ -158,11 +158,11 @@ public interface Application {
             if (commandLine.hasOption(templateNewLineUniversalOption)) {
                 userTemplateNewLineUniversal = commandLine.getOptionValue(templateNewLineUniversalOption);
             }
-            if (commandLine.hasOption(terminalOnlyOption)) {
-                userTerminalOnly = commandLine.getOptionValue(terminalOnlyOption);
-            }
             if (commandLine.hasOption(filterTreeOption)) {
                 userFilterTree = commandLine.getOptionValue(filterTreeOption);
+            }
+            if (commandLine.hasOption(terminalOnlyOption)) {
+                userTerminalOnly = commandLine.getOptionValue(terminalOnlyOption);
             }
             if (commandLine.hasOption(keepControlNamesOption)) {
                 userKeepControlNames = commandLine.getOptionValues(keepControlNamesOption);
@@ -190,8 +190,8 @@ public interface Application {
 
             Charset charset = StandardCharsets.UTF_8;
             boolean templateNewLineUniversal = false;
-            boolean terminalOnly = false;
             boolean filterTree = false;
+            boolean terminalOnly = false;
             String[] keepControlNames = {};
             String text = null;
             String template = null;
@@ -203,11 +203,11 @@ public interface Application {
             if (userTemplateNewLineUniversal != null) {
                 templateNewLineUniversal = userTemplateNewLineUniversal.equalsIgnoreCase("true");
             }
-            if (userTerminalOnly != null) {
-                terminalOnly = userTerminalOnly.equalsIgnoreCase("true");
-            }
             if (userFilterTree != null) {
                 filterTree = userFilterTree.equalsIgnoreCase("true");
+            }
+            if (userTerminalOnly != null) {
+                terminalOnly = userTerminalOnly.equalsIgnoreCase("true");
             }
             if (userKeepControlNames != null) {
                 keepControlNames = userKeepControlNames;
@@ -247,8 +247,8 @@ public interface Application {
                 template,
                 currentMethodName.substring(0, 1).toUpperCase() + currentMethodName.substring(1),
                 getClass().getPackage().getName(),
-                terminalOnly,
                 filterTree,
+                terminalOnly,
                 keepControlNames
             );
 
