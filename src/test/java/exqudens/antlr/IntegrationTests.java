@@ -2,6 +2,7 @@ package exqudens.antlr;
 
 import exqudens.antlr.model.ParsingResult;
 import exqudens.antlr.util.Constants;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -169,6 +170,8 @@ public class IntegrationTests {
             );
             Map<String, Map<String, String>> configuration = parsingResult.getConfiguration();
             List<Entry<List<String>, String>> list = parsingResult.getList();
+            Map<String, Object> map = parsingResult.getMap();
+            String json = new JSONObject(map).toString(4);
 
             System.out.println("-------------------------------------------------------------------------------------");
             System.out.println(text);
@@ -178,6 +181,8 @@ public class IntegrationTests {
             configuration.entrySet().forEach(System.out::println);
             System.out.println("-------------------------------------------------------------------------------------");
             list.forEach(System.out::println);
+            System.out.println("-------------------------------------------------------------------------------------");
+            System.out.println(json);
             System.out.println("-------------------------------------------------------------------------------------");
 
         } catch (RuntimeException e) {

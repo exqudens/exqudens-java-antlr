@@ -4,9 +4,9 @@ import java.util.List;
 
 public class Entity {
 
-    Integer index;
-    String name;
-    String value;
-    List<Entity> children;
+    public Integer index;
+    public String name;
+    public String value;
+    public List<Entity> children;
 
 }

@@ -51,8 +51,8 @@ public class OtherTests {
             List<Entity> list = entity.children;
             for (Entity o : list) {
                 children.add(toMap(o));
-                map.put("children", children);
             }
+            map.put("children", children);
             return map;
         } catch (Exception e) {
             throw new RuntimeException(e);

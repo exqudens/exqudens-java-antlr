@@ -44,11 +44,56 @@ public interface ParseTreeProcessor {
             keepControlNames
         );
         Entity rootEntity = toEntity(rootTree, ruleNames);
-        return null;
+        Map<String, Object> map = toMap(rootEntity);
+        return map;
     }
 
-    default Entity toEntity(Tree rootTree, String[] ruleNames) {
-        TreeProcessor treeProcessor = TreeProcessor.newInstance();
+    default Map<String, Object> toMap(Entity object) {
+        Map<String, Object> map = new HashMap<>();
+
+        map.put("index", object.index);
+
+        if (object.name != null) {
+            map.put("name", object.name);
+        }
+
+        if (object.value != null) {
+            map.put("value", object.value);
+        }
+
+        if (object.children != null) {
+            List<Map<String, Object>> children = new ArrayList<>();
+            for (Entity o : object.children) {
+                children.add(toMap(o));
+            }
+            map.put("children", children);
+        }
+
+        return map;
+    }
+
+    default Entity toEntity(Tree tree, String[] ruleNames) {
+        Entity entity = new Entity();
+
+        entity.index = tree.getId().intValue();
+        entity.name = null;
+        entity.value = null;
+        entity.children = null;
+
+        if (tree.getParseTree() instanceof  RuleNode) {
+            entity.name = toString(tree.getParseTree(), ruleNames);
+            entity.children = new ArrayList<>();
+        } else {
+            entity.value = toString(tree.getParseTree(), ruleNames);
+        }
+
+        if (entity.children != null) {
+            for (Tree t : tree.getChildren()) {
+                entity.children.add(toEntity(t, ruleNames));
+            }
+        }
+
+        /*TreeProcessor treeProcessor = TreeProcessor.newInstance();
 
         for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
             if (!(tree.getParseTree() instanceof TerminalNode)) {
@@ -61,18 +106,16 @@ public interface ParseTreeProcessor {
             namePath.remove(namePath.size() - 1);
 
             List<Long> idPath = treeProcessor.getIdPath(tree);
-            //System.out.println(namePath + " (" + idPath + "): '" + toString(tree.getParseTree(), ruleNames) + "'");
-        }
+        }*/
 
-        //System.out.println("---");
-        return null;
+        return entity;
     }
 
     default List<Entry<List<String>, String>> toEntryList(
         ParseTree parseTree,
         String[] ruleNames,
-        boolean terminalOnly,
         boolean filterTree,
+        boolean terminalOnly,
         Set<String> neededRuleNames,
         String... keepControlNames
     ) {

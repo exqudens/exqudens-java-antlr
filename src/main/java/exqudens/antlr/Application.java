@@ -262,12 +262,13 @@ public interface Application {
                 list.add(listEntry);
             }
 
-            Map<String, Object> map = new HashMap<>();
+            Map<String, Object> result = new HashMap<>();
 
-            map.put("configuration", configuration);
-            map.put("list", list);
+            result.put("configuration", configuration);
+            result.put("list", list);
+            result.put("map", parsingResult.getMap());
 
-            String json = new JSONObject(map).toString(outputIndentFactor);
+            String json = new JSONObject(result).toString(outputIndentFactor);
 
             if (userOutputDir == null) {
                 System.out.println(json);
