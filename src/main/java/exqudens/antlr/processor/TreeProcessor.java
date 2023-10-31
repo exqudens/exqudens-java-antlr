@@ -32,6 +32,7 @@ public interface TreeProcessor {
     }
 
     default List<Tree> breadthFirstSearch(Tree root) {
+        Objects.requireNonNull(root);
         List<Tree> result = new ArrayList<>();
         Queue<Tree> container = new LinkedList<>();
         container.add(root);

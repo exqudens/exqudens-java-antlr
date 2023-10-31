@@ -10,12 +10,18 @@ import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,8 +49,55 @@ public interface ParseTreeProcessor {
             neededRuleNames,
             keepControlNames
         );
-        Entity rootEntity = toEntity(rootTree, ruleNames);
+        Entity rootEntity = toEntity(null, rootTree, ruleNames);
         Map<String, Object> map = toMap(rootEntity);
+        Set<List<Integer>> terminalPaths = new LinkedHashSet<>();
+
+        for (Entity entity : depthFirstSearch(rootEntity)) {
+            if (entity.children != null) {
+                continue;
+            }
+
+            List<Entity> entityPath = getEntityPath(entity);
+            List<Integer> indexPath = entityPath.stream().map(o -> o.index).collect(Collectors.toList());
+            indexPath.remove(0);
+
+            terminalPaths.add(indexPath);
+        }
+
+        List<List<Integer>> terminalPathList = new ArrayList<>(terminalPaths);
+        List<Map<String, List<Integer>>> mapTerminalPaths = new ArrayList<>();
+
+        for (int i = 0; i < terminalPathList.size(); i++) {
+            Map<String, List<Integer>> mapTerminalPath = new HashMap<>();
+            mapTerminalPath.put("path_" + i, terminalPathList.get(i));
+            mapTerminalPaths.add(mapTerminalPath);
+        }
+
+        map.put("terminal_paths", mapTerminalPaths);
+
+        Set<List<Integer>> intermediatePaths = new LinkedHashSet<>();
+
+        for (List<Integer> terminalPath : terminalPaths) {
+            List<Integer> intermediatePath = new ArrayList<>();
+            int max = terminalPath.size() - 1;
+            for (int i = 0; i < max; i++) {
+                intermediatePath.add(terminalPath.get(i));
+                intermediatePaths.add(new ArrayList<>(intermediatePath));
+            }
+        }
+
+        List<List<Integer>> intermediatePathList = new ArrayList<>(intermediatePaths);
+        List<Map<String, List<Integer>>> mapIntermediatePaths = new ArrayList<>();
+
+        for (int i = 0; i < intermediatePathList.size(); i++) {
+            Map<String, List<Integer>> mapIntermediatePath = new HashMap<>();
+            mapIntermediatePath.put("path_" + i, intermediatePathList.get(i));
+            mapIntermediatePaths.add(mapIntermediatePath);
+        }
+
+        map.put("intermediate_paths", mapIntermediatePaths);
+
         return map;
     }
 
@@ -72,9 +125,10 @@ public interface ParseTreeProcessor {
         return map;
     }
 
-    default Entity toEntity(Tree tree, String[] ruleNames) {
+    default Entity toEntity(Entity parent, Tree tree, String[] ruleNames) {
         Entity entity = new Entity();
 
+        entity.parent = parent;
         entity.index = tree.getId().intValue();
         entity.name = null;
         entity.value = null;
@@ -89,26 +143,56 @@ public interface ParseTreeProcessor {
 
         if (entity.children != null) {
             for (Tree t : tree.getChildren()) {
-                entity.children.add(toEntity(t, ruleNames));
+                entity.children.add(toEntity(entity, t, ruleNames));
             }
         }
 
-        /*TreeProcessor treeProcessor = TreeProcessor.newInstance();
-
-        for (Tree tree : treeProcessor.depthFirstSearch(rootTree)) {
-            if (!(tree.getParseTree() instanceof TerminalNode)) {
-                continue;
-            }
-
-            List<Tree> treePath = treeProcessor.getTreePath(tree);
-
-            List<String> namePath = treePath.stream().map(t -> toString(t.getParseTree(), ruleNames)).collect(Collectors.toList());
-            namePath.remove(namePath.size() - 1);
-
-            List<Long> idPath = treeProcessor.getIdPath(tree);
-        }*/
-
         return entity;
+    }
+
+    default List<Entity> depthFirstSearch(Entity root) {
+        Objects.requireNonNull(root);
+        List<Entity> result = new ArrayList<>();
+        Stack<Entity> container = new Stack<>();
+        container.push(root);
+        while (!container.isEmpty()) {
+            Entity current = container.pop();
+            result.add(current);
+            if (current.children != null) {
+                container.addAll(current.children);
+            }
+        }
+        Collections.reverse(result);
+        return result;
+    }
+
+    default List<Entity> breadthFirstSearch(Entity root) {
+        Objects.requireNonNull(root);
+        List<Entity> result = new ArrayList<>();
+        Queue<Entity> container = new LinkedList<>();
+        container.add(root);
+        while (!container.isEmpty()) {
+            Entity current = container.remove();
+            result.add(current);
+            if (current.children != null) {
+                container.addAll(current.children);
+            }
+        }
+        return result;
+    }
+
+    default List<Entity> getEntityPath(Entity entity) {
+        List<Entity> path = new ArrayList<>();
+
+        Entity parent = entity;
+        do {
+            if (parent != null) {
+                path.add(0, parent);
+                parent = parent.parent;
+            }
+        } while (parent != null);
+
+        return path;
     }
 
     default List<Entry<List<String>, String>> toEntryList(
